@@ -10,7 +10,7 @@ COPY setup.py LICENSE MANIFEST.in README.md requirements.txt test-requirements.t
 COPY pytest.ini /armory-repo/
 COPY ./tests /armory-repo/tests/
 COPY ./scenario_configs /armory-repo/scenario_configs/
-COPY ./armory ./armory/
+COPY ./armory /armory-repo/armory/
 RUN /opt/conda/bin/pip install --use-feature=in-tree-build --no-cache-dir .
 
 WORKDIR /workspace
