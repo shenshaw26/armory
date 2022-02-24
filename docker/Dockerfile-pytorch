@@ -6,7 +6,7 @@ ARG armory_build_type
 FROM armory-base AS armory-local
 RUN echo "Building Armory from local source"
 WORKDIR /armory-repo/
-COPY setup.py LICENSE MANIFEST.in README.md requirements.txt test-requirements.txt armory-base-requirements.txt .
+COPY setup.py LICENSE MANIFEST.in README.md requirements.txt test-requirements.txt armory-base-requirements.txt /armory-repo/
 COPY pytest.ini .
 COPY ./tests ./tests/.
 COPY ./scenario_configs ./scenario_configs/.
