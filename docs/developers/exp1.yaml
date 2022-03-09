@@ -1,0 +1,20 @@
+# an experiment config file playground
+
+experiment:
+    data:
+        set: cifar10
+        - split:
+            train: 100
+            test: 50
+        batch: 64
+    attack:
+        knowledge: white
+        targeted: False
+        eps: float
+        eps_step: float
+
+environment:
+    credentials:
+        github: ghp_hex-sequence
+    docker_image: twosixarmory/pytorch
+    gpus: all
