@@ -1,23 +1,42 @@
 import pytest
-from armory.experiment import Experiment
+
+# from armory.experiment import Experiment
+import armory.experiment as ae
+import glob
+import os
+import json
 
 
-# @pytest.mark.parametrize("file", ["tests/scenarios/pytorch/image_classification.json"])
-# def test_scenario_read(file):
-#     with open(file, "r") as f:
-#         exp = Experiment.parse_raw(f.read())
-#     print(exp)
-#     assert exp.model.fit is True
-#
-@pytest.mark.parametrize("file", ["tests/scenarios/pytorch/image_classification.json"])
-def test_scenario_read(file):
-    with open(file, "r") as f:
-        exp = Experiment.parse_raw(f.read())
-    print(exp)
-    assert exp.model.fit is True
+@pytest.mark.parametrize(
+    "config", glob.glob(os.path.join("./scenario_configs", "*.json"), recursive=True)
+)
+@pytest.mark.parametrize(
+    "key, cls",
+    [
+        ("attack", ae.AttackParameters),
+        ("defense", ae.DefenseParameters),
+        ("metric", ae.MetricParameters),
+        ("model", ae.ModelParameters),
+        ("scenario", ae.ScenarioParameters),
+        # ("sysconfig", ae.SystemConfigurationParameters),
+    ],
+)
+def test_all_experiment_parameters(config, key, cls):
+    with open(config, "r") as f:
+        data = json.loads(f.read())
+
+    if data[key] is not None:
+        obj = cls(**data[key])
 
 
-@pytest.mark.parametrize("file", ["tests/scenarios/pytorch/image_classification.json"])
-def test_scenario_load(file):
-    exp = Experiment.load(file)
-    print(type(exp))
+@pytest.mark.parametrize(
+    "config", glob.glob(os.path.join("./scenario_configs", "*.json"), recursive=True)
+)
+def test_experiment_parameters_load(config):
+    exp = ae.ExperimentParameters.load(config)
+
+@pytest.mark.parametrize(
+    "config", ["./scenario_configs/no_docker/cifar_short.json"]
+)
+def test_experiment(config):
+

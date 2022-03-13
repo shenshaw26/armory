@@ -1,13 +1,15 @@
 """
 Environment parameter names
 """
-from pydantic import BaseModel, validator
 import os
 from typing import List, Union
 from enum import Enum
 import json
-from armory.utils import rsetattr, rhasattr, parse_overrides
 
+import yaml
+
+from armory.utils import rsetattr, rhasattr, parse_overrides
+from dataclasses import dataclass, fields, asdict
 DEFAULT_ARMORY_DIRECTORY = os.path.expanduser("~/.armory")
 DEFAULT_DOCKER_REPO = "twosixarmory"
 
@@ -25,16 +27,16 @@ class ExecutionMode(str, Enum):
     docker = "docker"
     native = "native"
 
-
-class Credentials(BaseModel):
+@dataclass
+class Credentials:
     """Armory Credentials"""
 
     git_token: str = None
     s3_token: str = None
     verify_ssl: bool = True
 
-
-class Paths(BaseModel):
+@dataclass
+class Paths:
     """Paths needed for armory use
     """
 
@@ -45,50 +47,20 @@ class Paths(BaseModel):
     temporary_directory: str = os.path.join(DEFAULT_ARMORY_DIRECTORY, "tmp")
 
     def check(self):
-        for k, v in self.dict().items():
-            if not os.path.isdir(v):
+        for field in fields(self):
+            if not os.path.isdir(getattr(self, field.name)):
                 raise NotADirectoryError(
-                    f"armory environment path {k}: {v} does not exist"
+                    f"armory environment path {field.name}: {getattr(self, field.name)} does not exist"
                 )
 
     def change_base(self, base_dir):
-        for k, v in self.dict().items():
-            new_v = os.path.join(base_dir, os.path.basename(v))
-            setattr(self, k, str(new_v))
+        for field in fields(self):
+            new_v = os.path.join(base_dir, os.path.basename(getattr(self, field.name)))
+            setattr(self, field.name, str(new_v))
 
 
-# TODO Think aobut what to do if multiple simulatenous test
-#  builds are happending on same machine with image name/tag
-#  clashes
-
-
-class DockerImage(str, Enum):
-    """Armory Supported Docker Images
-
-    IMAGES
-    base:                   This image contains the base requirements
-                            necessary to run armory within a container.
-                            NOTE: This image does NOT contain an installation
-                            of armory.
-
-    tf2                     Image with armory installed and ready to use with
-                            TensorFlow2 based architectures
-
-    pytorch                 Image with armory installed and ready to use with
-                            pytorch based architectures
-
-    pytorch-deepspeech      Image with armory installed and ready to use with
-                            pytorch deepspeech architectures (primarily used with
-                            audio scenarios
-    """
-
-    base = f"{DEFAULT_DOCKER_REPO}/base"
-    pytorch = f"{DEFAULT_DOCKER_REPO}/pytorch"
-    pytorch_deepspeech = f"{DEFAULT_DOCKER_REPO}/pytorch-deepspeech"
-    tf2 = f"{DEFAULT_DOCKER_REPO}/tf2"
-
-
-class EnvironmentParameters(BaseModel):
+@dataclass
+class EnvironmentParameters:
     """Armory Environment Configuration Context
 
     This Dataclass contains the environmental references
@@ -103,35 +75,22 @@ class EnvironmentParameters(BaseModel):
     execution_mode: ExecutionMode = ExecutionMode.native
     credentials: Credentials = Credentials()
     paths: Paths = Paths()
-    images: List[Union[str, DockerImage]] = [
-        DockerImage.tf2,
-        DockerImage.pytorch,
-        DockerImage.pytorch_deepspeech,
-    ]
 
     def check(self):
         self.paths.check()
 
     def pretty_print(self):
-        return json.dumps(self.dict(), indent=2, sort_keys=True)
-
-    @validator("execution_mode")
-    def validate_execution_mode(cls, v):
-        if isinstance(v, str):
-            return ExecutionMode._value2member_map_[v]
-        elif isinstance(v, ExecutionMode):
-            return v
-        else:
-            return ValueError(
-                f"Cannot Set Execution Mode to {v}... must be str or `ExecutionMode` enum value"
-            )
+        return json.dumps(asdict(self), indent=2, sort_keys=True)
 
     @classmethod
     def load(cls, profile=None, overrides=[]):
         if profile is None:
             profile = cls().profile
 
-        env = cls.parse_file(profile)
+        with open(profile, "r") as f:
+            data = yaml.safe_load(f.read())
+
+        env = cls(**data)
         env.apply_overrides(overrides)
         env.check()
         return env
