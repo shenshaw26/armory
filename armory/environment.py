@@ -2,7 +2,6 @@
 Environment parameter names
 """
 import os
-from typing import List, Union
 from enum import Enum
 import json
 
@@ -10,6 +9,7 @@ import yaml
 
 from armory.utils import rsetattr, rhasattr, parse_overrides
 from dataclasses import dataclass, fields, asdict
+
 DEFAULT_ARMORY_DIRECTORY = os.path.expanduser("~/.armory")
 DEFAULT_DOCKER_REPO = "twosixarmory"
 
@@ -27,6 +27,7 @@ class ExecutionMode(str, Enum):
     docker = "docker"
     native = "native"
 
+
 @dataclass
 class Credentials:
     """Armory Credentials"""
@@ -34,6 +35,7 @@ class Credentials:
     git_token: str = None
     s3_token: str = None
     verify_ssl: bool = True
+
 
 @dataclass
 class Paths:

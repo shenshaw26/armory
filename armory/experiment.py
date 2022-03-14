@@ -91,6 +91,7 @@ class ScenarioParameters:
 # TODO: restructure experiments to use metadata key that
 #  contains information like name and description
 
+
 @dataclass
 class ExperimentParameters:
     _description: str
@@ -142,7 +143,6 @@ class Experiment(object):
         self.scenario_fn = getattr(
             self.scenario_module, self.exp_pars.scenario.function_name
         )
-
 
 
 # class MetaData(BaseModel):

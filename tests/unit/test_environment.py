@@ -1,8 +1,9 @@
 import pytest
 import armory.environment as ae
 import os
-import json
+# import json
 from dataclasses import asdict, fields
+
 
 @pytest.fixture
 def temp_armory_env_dict(tmp_path):
@@ -19,13 +20,15 @@ def temp_armory_env_dict(tmp_path):
 def test_default_paths():
     default = ae.Paths()
     for field in fields(default):
-        assert os.path.dirname(getattr(default, field.name)) == str(ae.DEFAULT_ARMORY_DIRECTORY)
+        assert os.path.dirname(getattr(default, field.name)) == str(
+            ae.DEFAULT_ARMORY_DIRECTORY
+        )
 
 
 def test_path_construction(temp_armory_env_dict):
     exp_dir, path_dict = temp_armory_env_dict
     paths = ae.Paths(**path_dict)
-    for k,v in asdict(paths).items():
+    for k, v in asdict(paths).items():
         assert os.path.dirname(v) == exp_dir
 
     with pytest.raises(OSError):
@@ -70,6 +73,7 @@ def test_environment_construction(temp_armory_env_dict, tmp_path):
     # env4.execution_mode = "docker"
     # print(env4.execution_mode)
     # assert env4.execution_mode == ae.ExecutionMode.docker
+
 
 #
 # def test_environment_load(temp_armory_env_dict, tmp_path):
