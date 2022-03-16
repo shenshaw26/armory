@@ -31,6 +31,8 @@ from armory.utils import docker_api
 from armory.utils.configuration import load_config, load_config_stdin
 import armory.logs
 
+import armory.cli
+
 
 class PortNumber(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
@@ -119,7 +121,9 @@ def _debug(parser):
     parser.add_argument(
         "-d",
         "--debug",
-        action="store_true",
+        action="store_const",
+        const="DEBUG",
+        default="INFO",
         help="synonym for --log-level=armory:debug",
     )
     parser.add_argument(
@@ -195,7 +199,7 @@ def _docker_image(parser):
 def _docker_image_optional(parser):
     parser.add_argument(
         "--docker-image",
-        default=images.PYTORCH,
+        default=images.TF1,
         metavar="<docker image>",
         type=str,
         help="docker image framework: 'tf1', 'tf2', or 'pytorch'",
@@ -556,33 +560,13 @@ def configure(command_args, prog, description):
     parser = argparse.ArgumentParser(prog=prog, description=description)
     _debug(parser)
 
-    parser.add_argument(
-        "--use-defaults", default=False, action="store_true", help="Use Defaults"
-    )
-
     args = parser.parse_args(command_args)
     armory.logs.update_filters(args.log_level, args.debug)
 
     default_host_paths = paths.HostDefaultPaths()
 
     config = None
-
-    if args.use_defaults:
-        config = {
-            "dataset_dir": default_host_paths.dataset_dir,
-            "local_git_dir": default_host_paths.local_git_dir,
-            "saved_model_dir": default_host_paths.saved_model_dir,
-            "tmp_dir": default_host_paths.tmp_dir,
-            "output_dir": default_host_paths.output_dir,
-            "verify_ssl": True,
-        }
-        print("Saving configuration...")
-        save_config(config, default_host_paths.armory_dir)
-        print("Configure successful")
-        print("Configure complete")
-        return
-
-    elif os.path.exists(default_host_paths.armory_config):
+    if os.path.exists(default_host_paths.armory_config):
         response = None
         while response is None:
             prompt = f"Existing configuration found: {default_host_paths.armory_config}"
@@ -665,7 +649,6 @@ def configure(command_args, prog, description):
     print(resolved)
     save = None
     while save is None:
-
         if os.path.isfile(default_host_paths.armory_config):
             print("WARNING: this will overwrite existing configuration.")
             print("    Press Ctrl-C to abort.")
@@ -740,7 +723,7 @@ def exec(command_args, prog, description):
         sys.exit(1)
 
     args = parser.parse_args(armory_args)
-    armory.logs.update_filters(args.log_level, args.debug)
+    armory.logs.update_filters(args.log_level)
 
     config = {"sysconfig": {"docker_image": args.docker_image}}
     # Config
@@ -750,6 +733,11 @@ def exec(command_args, prog, description):
     rig = Evaluator(config, root=args.root)
     exit_code = rig.run(command=command)
     sys.exit(exit_code)
+
+
+def hello(command_args, prog, description):
+    print("Running Hello")
+    print("Command args: {}".format(command_args))
 
 
 # command, (function, description)
@@ -764,6 +752,7 @@ COMMANDS = {
     "configure": (configure, "set up armory and dataset paths"),
     "launch": (launch, "launch a given docker container in armory"),
     "exec": (exec, "run a single exec command in the container"),
+    "hello": (hello, "run hello"),
 }
 
 
@@ -808,10 +797,61 @@ def usage():
 #     func(sys.argv[2:], prog, description)
 
 
-def main():
-    from armory.cli import cli
+def bob(interactive, docker=False):
+    """
+    Bob subcommand
+    """
+    a = locals()
+    print(f"Bob Interactive {a} ")
 
-    cli()
+
+def main():
+    armory.cli.cli()
+    # parser = armory.cli.setup_parser()
+
+    # # parser = argparse.ArgumentParser(prog="armory", usage=usage())
+    # parser = argparse.ArgumentParser(prog="armory")
+    #
+    # # parser.add_argument(
+    # #     "command", metavar="<command>", type=str, help="armory command", action=Command,
+    # # )
+    # parser.add_argument("--version", action='version',version=f"{armory.__version__}", help="Show Armory Version used")
+    # grp = parser.add_mutually_exclusive_group()
+    # grp.add_argument("-v", "--verbose", default=False, action="store_true", help="Set ALL log levels to `trace`")
+    # grp.add_argument("--log-level", default=False, action="store_true", help="Set Log Levels for modules")
+    # subp = parser.add_subparsers(dest="command")
+    #
+    # # ----------------- Adding relevant subparsers ----------------------------
+    # subp.required = True
+    # p2 = subp.add_parser("bob", )
+    # p2.add_argument("--bob-arg", default=False, action="store_true")
+    # p2.set_defaults(handler=bob)
+    # # -------------------------------------------------------------------------
+    #
+    # args, leftover = parser.parse_known_args()
+    # print(f"Main Args: {args}\nleftover: {leftover}")
+    # args.handler(leftover)
+    #
+    # print(p2.parse_args())
+    # # print(getattr(__name__, args.command))
+
+    # args.c
+    # if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help", "help"):
+    #     print(usage())
+    #     sys.exit(1)
+    # elif sys.argv[1] in ("-v", "--version", "version"):
+    #     print(f"{armory.__version__}")
+    #     sys.exit(0)
+    #
+    # parser = argparse.ArgumentParser(prog="armory", usage=usage())
+    # parser.add_argument(
+    #     "command", metavar="<command>", type=str, help="armory command", action=Command,
+    # )
+    # args = parser.parse_args(sys.argv[1:2])
+    #
+    # func, description = COMMANDS[args.command]
+    # prog = f"{PROGRAM} {args.command}"
+    # func(sys.argv[2:], prog, description)
 
 
 if __name__ == "__main__":

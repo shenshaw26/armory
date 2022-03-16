@@ -113,6 +113,7 @@ def external_resources():
         raise e
 
 
+# TODO: This should go away once environment is fully fleshed out
 @pytest.fixture
 def armory_dataset_dir():
     from armory import paths
