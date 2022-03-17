@@ -17,10 +17,17 @@ jobs:
       - uses: actions/checkout@v2
         with:
           ref: ${{ github.event.client_payload.branch }}
-      - uses: actions/setup-python@v1
+      - uses: actions/setup-python@v2
         with:
           python-version: '3.7'
       - name: Build image
         run: |
-          echo ${{github.event.inputs.tags}}
-          bash docker/update_registry.sh ${{github.event.inputs.tags}}
+          echo "Running python build.py ${{github.event.inputs.tags}}"
+          python build.py ${{github.event.inputs.tags}}
+      - name: Test Image
+        run: |
+          echo "Testing Image"
+          echo "**not done yet**"
+      - name: Push Image
+        run: |
+          echo "Pushing Image"
